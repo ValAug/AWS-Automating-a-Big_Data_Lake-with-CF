@@ -77,4 +77,3 @@ Resources:
       Path: "/"
       Roles:
       - !Ref RootRole
-
