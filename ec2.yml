@@ -1,0 +1,80 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'A template with a dinamic mapping that allows multi-regions deployment.  Must use Linux (1) distro. Feel free to update the AMIs with a newer Linux (1) version if is require'
+Parameters:
+  KeyName: 
+    Description: 'Name of an existing EC2 KeyPair to enable SSH access to the instance'
+    Type: AWS::EC2::KeyPair::KeyName
+    ConstraintDescription : 'must be the name of an existing EC2 KeyPair.'
+  EnvironmentSize:
+    Type: String
+    Default: SMALL
+    AllowedValues: # make sure default value is part of AllowValues
+      - SMALL
+      - MEDIUM
+      - LARGE
+    Description: Select Environment Size (S,M,L)
+Mappings:
+  RegionMap:
+    us-east-1:
+      AMILINUX:  ami-00eb20669e0990cb4
+      # You can add as much AMI's and Regions as you need    us-east-2:
+      AMILINUX: ami-0c64dd618a49aeee8
+    us-west-1:
+      AMILINUX: ami-0bce08e823ed38bdd
+    us-west-2:
+      AMILINUX: ami-08d489468314a58df
+  InstanceSize:
+    SMALL:
+      "EC2" : "t2.micro"
+    MEDIUM:
+      "EC2" : "t2.small"
+    LARGE:
+      "EC2" : "t2.medium"
+
+Resources:
+  EC2:
+    Type: "AWS::EC2::Instance"
+    Properties:
+      KeyName: 
+      ImageId: !FindInMap [RegionMap, !Ref "AWS::Region", AMILINUX] # Dynamic mapping + Pseudo Parameter
+      InstanceType: !FindInMap [InstanceSize, !Ref EnvironmentSize, EC2]
+      UserData:
+        "Fn::Base64":
+          !Sub |
+                   
+  RootRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - ec2.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Path: "/"
+  RolePolicies:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: root
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Action: 
+            - 's3:GetObject'
+            - 's3:ListBucket'
+            - 's3:PutObject'
+          Resource: 'arn:aws:s3:::'
+      Roles:
+      - !Ref RootRole
+  RootInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: "/"
+      Roles:
+      - !Ref RootRole
+
