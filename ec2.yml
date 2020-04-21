@@ -18,7 +18,8 @@ Mappings:
   RegionMap:
     us-east-1:
       AMILINUX:  ami-00eb20669e0990cb4
-      # You can add as much AMI's and Regions as you need    us-east-2:
+      # You can add as much AMI's and Regions as you need    
+    us-east-2:
       AMILINUX: ami-0c64dd618a49aeee8
     us-west-1:
       AMILINUX: ami-0bce08e823ed38bdd
