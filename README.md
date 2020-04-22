@@ -16,7 +16,7 @@ aws --region <region-name> cloudformation delete-stack --stack-name <name> --pro
 
 aws --region <region-name> cloudformation create-stack --stack-name <name> --template-body file://<file-name.yaml> --capabilities CAPABILITY_NAMED_IAM --profile <profile-name>
 
-
+aws cloudformation estimate-template-cost --template-body file://<file-name.yaml>
 
 # install cfn-lint
 pip3 install cfn-lint 
