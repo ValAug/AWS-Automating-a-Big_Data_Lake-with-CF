@@ -1,0 +1,127 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:                                                                                                       
+  CrawlerName:  
+    Type: String
+    Default: 
+  DatabaseName:
+    Type: String
+    Default:
+Resources:
+  OrderlogsDatabase:
+    Type: AWS::Glue::Database
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseInput:
+        Name: !Ref DatabaseName
+        Description: "AWS Glue container holds metadata tables for the logs crawler"
+  CrawlerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: ''
+            Effect: Allow
+            Principal:
+              Service:              
+                glue.amazonaws.com
+            Action: 
+              'sts:AssumeRole'
+            Condition:
+              StringEquals:
+                'sts:ExternalId': !Ref 'AWS::AccountId'
+  CrawlerPolicies:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: "crawler_policy"
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Action: 
+              - "glue:*"
+              - "s3:PutObject"
+              - "s3:GetObject"
+              - "s3:DeleteObject"
+              - "s3:ListBucket"
+              - "s3:GetBucketLocation"
+              - "s3:ListAllMyBuckets"
+              - "cloudwatch:PutMetricData"
+            Resource: 
+              arn:aws:s3:::storelogs
+          -
+            Effect: "Allow"
+            Action: 
+              - "logs:CreateLogGroup"
+              - "logs:CreateLogStream"
+              - "logs:PutLogEvents"
+              - "s3:PutObject"
+              - "s3:GetObject"
+              - "s3:DeleteObject"
+              -  s3:ListBucket"
+              - "s3:GetBucketLocation"
+              - "cloudwatch:PutMetricData"
+            Resource: 
+              arn:aws:s3:::storelogs/*
+          - 
+            Effect: Allow
+            Action: 
+            - cloudwatch:*
+            Resource: "*"
+      Roles: 
+        - !Ref CrawlerRole
+  GlueTable:
+    Type: AWS::Glue::Table
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseName: !Ref 
+      TableInput:
+        Owner: owner
+        Retention: 0
+        StorageDescriptor:
+          Columns:
+          - Name: InvoiceNo
+            Type: string
+          - Name: StockCode
+            Type: string
+          - Name: Description
+            Type: string
+          - Name: Quantity
+            Type: bigint
+          - Name: InvoiceData
+            Type: string
+          - Name: UnitPrice
+            Type: double
+          - Name: CustomerID
+            Type: bigint
+          - Name: Country
+            Type: string
+        PartitionKeys:
+        - Name: Year
+          Type: string
+        - Name: Month
+          Type: string
+        - Name: Day
+          Type: string
+        - Name: Hour
+          Type: string
+        TableType: EXTERNAL_TABLE
+  GlueCrawler:
+    Type: AWS::Glue::Crawler
+    Properties:
+      Name: !Ref CrawlerName
+      #Classifiers: none, use the default classifier
+      Description: AWS Glue crawler to crawl OrderLogs data
+      #Schedule: none, use default run-on-demand
+      DatabaseName: !Ref DatabaseName
+      Role: !Ref CrawlerRole
+      Targets:
+        S3Targets:
+          # Public S3 bucket with the OrderLogs data
+          - Path: 
+      SchemaChangePolicy:
+        UpdateBehavior: "UPDATE_IN_DATABASE"
+        DeleteBehavior: "LOG"
+      Configuration: "{\"Version\":1.0,\"CrawlerOutput\":{\"Partitions\":{\"AddOrUpdateBehavior\":\"InheritFromTable\"},\"Tables\":{\"AddOrUpdateBehavior\":\"MergeNewColumns\"}}}"
