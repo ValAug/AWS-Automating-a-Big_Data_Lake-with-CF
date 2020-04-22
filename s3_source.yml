@@ -1,0 +1,167 @@
+---
+AWSTemplateFormatVersion: 2010-09-09
+Description: Stack for a Firehose DeliveryStream to S3 Destination and to Redshift.
+Conditions:
+  SingleNode: !Equals [ !Ref RedshiftNodeCount, 1 ]
+Parameters:
+  DatabaseName:
+      Type: String
+      Default: dev
+      Description: Database name 
+  MasterUsername:
+      Type: String
+      Description: Master user name for Redshift 
+      Default: admin
+  MasterUserPassword:
+      Type: String
+      Default: 
+      Description: Master password for Redshift (used mixed case and numbers)
+      NoEcho: true
+  RedshiftNodeCount:
+      Type: Number
+      Description: Number of Redshift nodes 
+      Default: 1
+      MinValue: 1
+      ConstraintDescription: Must be a number greater or equal to 1
+
+Resources:
+  deliverystream:
+    DependsOn:
+      - deliveryPolicy
+    Type: AWS::KinesisFirehose::DeliveryStream
+    Properties:
+      DeliveryStreamName: 
+      DeliveryStreamType: DirectPut
+      ExtendedS3DestinationConfiguration:
+        BucketARN: !Join 
+          - ''
+          - - 'arn:aws:s3:::'
+            - !Ref s3bucket
+        BufferingHints:
+          IntervalInSeconds: 60
+          SizeInMBs: 5
+        CompressionFormat: UNCOMPRESSED
+        EncryptionConfiguration:
+          NoEncryptionConfig: Encryption
+        Prefix: firehose/
+        RoleARN: !GetAtt deliveryRole.Arn
+        ProcessingConfiguration:
+                  Enabled: False
+  s3bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: 
+      VersioningConfiguration:
+        Status: Enabled
+  deliveryRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: ''
+            Effect: Allow
+            Principal:
+              Service:              
+                firehose.amazonaws.com
+            Action: 
+              'sts:AssumeRole'
+            Condition:
+              StringEquals:
+                'sts:ExternalId': !Ref 'AWS::AccountId'
+  deliveryPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: firehose_delivery_policy
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - 's3:AbortMultipartUpload'
+              - 's3:GetBucketLocation'
+              - 's3:GetObject'
+              - 's3:ListBucket'
+              - 's3:ListBucketMultipartUploads'
+              - 's3:PutObject'
+            Resource:
+              - !Join 
+                - ''
+                - - 'arn:aws:s3:::'
+                  - !Ref s3bucket
+              - !Join 
+                - ''
+                - - 'arn:aws:s3:::'
+                  - !Ref s3bucket
+                  - '*'
+      Roles:
+        - !Ref deliveryRole
+        
+  RedshiftCluster: 
+    Type: AWS::Redshift::Cluster
+    Properties: 
+      ClusterType: !If [ SingleNode, single-node, multi-node ]  
+      NumberOfNodes: !If [ SingleNode, !Ref 'AWS::NoValue', !Ref RedshiftNodeCount ] 
+      DBName: !Sub ${DatabaseName}
+      IamRoles:
+        - !GetAtt 
+            RedshiftRole.Arn
+      MasterUserPassword: !Ref MasterUserPassword
+      MasterUsername: !Ref MasterUsername
+      PubliclyAccessible: true
+      NodeType: dc2.large
+      Port: 5439
+  RedshiftRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: ''
+            Effect: Allow
+            Principal:
+              Service:              
+                redshift.amazonaws.com
+            Action: 
+              'sts:AssumeRole'
+            Condition:
+              StringEquals:
+                'sts:ExternalId': !Ref 'AWS::AccountId'
+  RawDataBucketRolePolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: "RawDataBucketRolePolicy"
+      PolicyDocument: 
+        Version: 2012-10-17
+        Statement:
+          - 
+            Effect: Allow
+            Action: 
+              - 'redshift:*'
+            Resource: arn:aws:redshift:*:*:*
+          - 
+             Effect: Allow
+             Action: 
+               - 's3:Get*'
+               - 's3:List*'
+             Resource: arn:aws:s3:::avalstorelogs*
+          - 
+            Effect: "Allow"
+            Action: 
+              - "logs:CreateLogGroup"
+              - "logs:CreateLogStream"
+              - "logs:PutLogEvents"
+              - "logs:GetLogEvents"
+            Resource: arn:aws:logs:*:*:*
+          - 
+            Effect: Allow
+            Action: 
+            - cloudwatch:*
+            Resource: "*"
+      Roles:
+        - !Ref RedshiftRole
+
+Outputs:
+  deliverysreamARN:
+    Description: The ARN of the firehose delivery stream
+    Value: !GetAtt deliverystream.Arn
