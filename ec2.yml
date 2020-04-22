@@ -43,7 +43,7 @@ Resources:
       UserData:
         "Fn::Base64":
           !Sub |
-                   
+            yum install -y aws-kinesis-agent              
   RootRole:
     Type: AWS::IAM::Role
     Properties:
