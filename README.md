@@ -3,13 +3,13 @@
 ## These set of templates will intent to create and deploy secure Data Lake stackset using Cloudformation.  This Stackset use a default VPC for POC presentation.
 
 ### Instalation 
-
-1- pip install awscli
-2- pip install --upgrade awscli
-3- aws configure
-4- aws configure --profile <profile-name> # choose profile of preference
-5- export AWS_ACCESS_KEY_ID=<access-key-id>
-6- export AWS_SECRET_ACCESS_KEY=<secret-access-key>
+Markup :    list
+1. pip install awscli
+2. pip install --upgrade awscli
+3. aws configure
+4. aws configure --profile <profile-name> # choose profile of preference
+5. export AWS_ACCESS_KEY_ID=<access-key-id>
+6. export AWS_SECRET_ACCESS_KEY=<secret-access-key>
 
 *Usefull CLI Commands*:
 aws --region <region-name> cloudformation validate-template --template-body file://<file-name.yaml>
