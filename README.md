@@ -3,7 +3,7 @@
 ## These set of templates will intent to create and deploy secure Data Lake stackset using Cloudformation.  This Stackset use a default VPC for POC presentation.
 
 ### Instalation 
-Markup :    list
+
 1. pip install awscli
 2. pip install --upgrade awscli
 3. aws configure
