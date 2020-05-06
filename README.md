@@ -29,3 +29,7 @@ aws cloudformation estimate-template-cost --template-body file://<file-name.yaml
 
 # install cfn-lint
 pip3 install cfn-lint 
+
+# Disclaimer
+
+These templates are only for POC presentation some security policies should be change accordantly to your prodction enviroment.  
