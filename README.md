@@ -27,7 +27,7 @@ aws --region <region-name> cloudformation create-stack --stack-name <name> --tem
 
 aws cloudformation estimate-template-cost --template-body file://<file-name.yaml>
 
-# install cfn-lint
+# Install cfn-lint
 pip3 install cfn-lint 
 
 # Disclaimer
