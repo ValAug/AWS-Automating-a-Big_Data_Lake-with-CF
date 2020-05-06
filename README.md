@@ -32,4 +32,4 @@ pip3 install cfn-lint
 
 # Disclaimer
 
-These templates are only for POC presentation some security policies should be change accordantly to your production enviroment.  
+These templates are only for POC presentation some security policies should be change accordantly to be use in a production enviroment.  
