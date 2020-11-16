@@ -1,4 +1,4 @@
-# AWS-Automating-a-Big_Data_Lake-with-CF
+# AWS_Big_Data_Lake_with_CF
 
 ## These set of templates will intent to create and deploy secure Data Lake stackset using Cloudformation.  This Stackset use a default VPC.
 
